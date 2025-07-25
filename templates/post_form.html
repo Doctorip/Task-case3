@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bg-white max-w-xl mx-auto p-8 rounded-xl shadow space-y-4">
+    <h2 class="text-2xl font-bold mb-2">{{ editing and 'Редактировать пост' or 'Новый пост' }}</h2>
+    <form method="post" class="space-y-4">
+        <input name="title" value="{{ post.title if post else '' }}" class="w-full border rounded px-4 py-2" placeholder="Заголовок" required>
+        <textarea name="content" class="w-full border rounded px-4 py-2" rows="5" placeholder="Содержание" required>{{ post.content if post else '' }}</textarea>
+        <input name="tags" value="{{ post.tags if post else '' }}" class="w-full border rounded px-4 py-2" placeholder="теги, через запятую">
+        <label class="flex items-center space-x-2">
+            <input type="checkbox" name="is_private" class="form-checkbox h-5 w-5 text-blue-600" {% if post and post.is_private %}checked{% endif %}>
+            <span class="text-sm">Только по запросу</span>
+        </label>
+        <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-semibold">{{ editing and 'Сохранить' or 'Опубликовать' }}</button>
+    </form>
+</div>
+{% endblock %}

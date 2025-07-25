@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bg-white max-w-xl mx-auto p-8 rounded-xl shadow space-y-4">
+    {% if post.is_private %}
+        <div class="bg-yellow-100 border-l-4 border-yellow-400 text-yellow-800 px-4 py-2 mb-4 rounded">
+            <b>Этот пост доступен только автору</b>
+        </div>
+    {% endif %}
+    <div class="flex items-center gap-3">
+        <img src="{{ post.user.avatar or 'https://randomuser.me/api/portraits/men/1.jpg' }}" class="w-10 h-10 rounded-full border">
+        <a href="{{ url_for('view_user', user_id=post.user.id) }}" class="font-semibold text-gray-700 hover:underline">{{ post.user.name }}</a>
+        <div class="text-xs text-gray-400 ml-auto">{{ post.date.strftime('%d.%m.%Y %H:%M') }}</div>
+    </div>
+    <h1 class="text-2xl font-bold">{{ post.title }}</h1>
+    <div class="text-gray-700 mb-2">{{ post.content }}</div>
+    {% if post.tags %}
+    <div class="flex gap-2">
+        {% for tag in post.tags.split(',') %}
+            <a href="{{ url_for('posts_by_tag', tag=tag.strip()) }}"
+               class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded hover:bg-blue-200">#{{ tag.strip() }}</a>
+        {% endfor %}
+    </div>
+    {% endif %}
+    <div class="flex gap-4 mt-4">
+        <form method="post" action="{{ url_for('like_post', post_id=post.id) }}">
+            <button type="submit" class="flex items-center gap-1 {% if liked %}text-pink-600{% else %}text-gray-400{% endif %} font-semibold">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 015.656 5.656L10 18.657l-6.828-6.829a4 4 0 010-5.656z"/></svg>
+                {{ likes_count }} Лайков
+            </button>
+        </form>
+        {% if user and user.id == post.user.id %}
+        <a href="{{ url_for('edit_post', post_id=post.id) }}" class="text-blue-500 hover:underline ml-4">Редактировать</a>
+        <form action="{{ url_for('delete_post', post_id=post.id) }}" method="post" style="display:inline">
+            <button type="submit" onclick="return confirm('Удалить пост?')" class="text-red-500 hover:underline ml-2">Удалить</button>
+        </form>
+        {% endif %}
+    </div>
+    <hr>
+    <h3 class="font-semibold text-lg">Комментарии</h3>
+    <div class="space-y-3">
+        {% for c in comments %}
+        <div class="flex gap-2 items-start">
+            <img src="{{ c.user.avatar or 'https://randomuser.me/api/portraits/men/1.jpg' }}" class="w-8 h-8 rounded-full">
+            <div>
+                <div class="font-semibold text-sm">{{ c.user.name }}</div>
+                <div class="text-gray-700 text-sm">{{ c.text }}</div>
+                <div class="text-xs text-gray-400">{{ c.date.strftime('%d.%m.%Y %H:%M') }}</div>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-gray-400 text-sm">Комментариев пока нет.</div>
+        {% endfor %}
+    </div>
+    {% if user %}
+    <form method="post" class="mt-4 flex gap-2">
+        <input type="text" name="text" required placeholder="Оставьте комментарий..." class="flex-1 px-3 py-2 border rounded focus:outline-none focus:ring">
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-semibold">Отправить</button>
+    </form>
+    {% else %}
+    <div class="text-center mt-2 text-blue-600">
+        <a href="{{ url_for('login') }}">Войдите</a>, чтобы оставить комментарий
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

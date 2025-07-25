@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mb-8 flex gap-4">
+    <a href="{{ url_for('feed_subscriptions') }}" class="text-sm px-4 py-2 rounded 
+        {% if current_tab == 'subscriptions' %}bg-blue-600 text-white font-bold{% else %}bg-gray-200 text-gray-700{% endif %}">
+        Подписки
+    </a>
+    <a href="{{ url_for('feed_recommendations') }}" class="text-sm px-4 py-2 rounded 
+        {% if current_tab == 'recommendations' %}bg-blue-600 text-white font-bold{% else %}bg-gray-200 text-gray-700{% endif %}">
+        Рекомендации
+    </a>
+    <a href="{{ url_for('index') }}" class="text-sm px-4 py-2 rounded 
+        {% if current_tab == 'all' %}bg-blue-600 text-white font-bold{% else %}bg-gray-200 text-gray-700{% endif %}">
+        Все посты
+    </a>
+</div>
+
+<form method="get" class="mb-4 flex gap-2 items-center">
+    <label class="text-gray-600 text-sm">Сортировка:</label>
+    <select name="sort" onchange="this.form.submit()" class="border rounded px-2 py-1">
+        <option value="new" {% if sort == 'new' %}selected{% endif %}>Сначала новые</option>
+        <option value="old" {% if sort == 'old' %}selected{% endif %}>Сначала старые</option>
+        <option value="likes" {% if sort == 'likes' %}selected{% endif %}>По лайкам</option>
+    </select>
+</form>
+
+{% if all_tags %}
+    <div class="mb-6">
+        <div class="text-gray-600 mb-2">Теги:</div>
+        <div class="flex flex-wrap gap-2">
+            {% for tag in all_tags %}
+                <a href="{{ url_for('posts_by_tag', tag=tag) }}"
+                   class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs hover:bg-blue-200 {% if current_tag == tag %}font-bold bg-blue-200{% endif %}">#{{ tag }}</a>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
+
+{% if current_tag %}
+    <div class="mb-4 text-sm text-gray-500">
+        Посты с тегом: <span class="font-bold text-blue-700">#{{ current_tag }}</span>
+        <a href="{{ url_for('index') }}" class="ml-4 underline text-blue-500">Показать все</a>
+    </div>
+{% endif %}
+
+{% if posts %}
+    <div class="space-y-6">
+        {% for post in posts %}
+        <div class="bg-white p-6 rounded-xl shadow hover:shadow-lg transition flex flex-col gap-2">
+            <div class="flex items-center gap-3 mb-2">
+                <img src="{{ post.user.avatar or 'https://randomuser.me/api/portraits/men/1.jpg' }}" class="w-9 h-9 rounded-full border">
+                <a href="{{ url_for('view_user', user_id=post.user.id) }}" class="font-medium text-gray-700 hover:underline">{{ post.user.name }}</a>
+                <span class="ml-auto text-xs text-gray-400">{{ post.date.strftime('%d.%m.%Y %H:%M') }}</span>
+            </div>
+            <a href="{{ url_for('post_view', post_id=post.id) }}" class="text-lg font-bold text-blue-700 hover:underline">{{ post.title }}</a>
+            <div class="text-gray-700">{{ post.content[:120] }}{% if post.content|length > 120 %}...{% endif %}</div>
+            <div class="flex items-center gap-3 mt-2">
+                <span class="{% if post.id in likes %}text-pink-600{% else %}text-gray-400{% endif %} flex items-center gap-1">
+                    <svg class="w-5 h-5 inline" fill="currentColor" viewBox="0 0 20 20"><path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 015.656 5.656L10 18.657l-6.828-6.829a4 4 0 010-5.656z"/></svg>
+                    {{ post.likes_count }}
+                </span>
+                {% if post.tags %}
+                    <div class="flex gap-2">
+                        {% for tag in post.tags.split(',') %}
+                            <a href="{{ url_for('posts_by_tag', tag=tag.strip()) }}"
+                               class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded hover:bg-blue-200">#{{ tag.strip() }}</a>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                {% if post.is_private %}
+                <span class="bg-yellow-200 text-yellow-800 text-xs px-2 py-1 rounded">Приватный</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="bg-white p-6 rounded-xl shadow text-center text-gray-500 text-lg">
+        Нет публикаций
+    </div>
+{% endif %}
+{% endblock %}

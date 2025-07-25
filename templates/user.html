@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-lg mx-auto bg-white p-8 rounded-xl shadow">
+    <div class="flex gap-4 items-center mb-6">
+        <img src="{{ target.avatar or 'https://randomuser.me/api/portraits/men/1.jpg' }}" class="w-16 h-16 rounded-full border">
+        <div>
+            <h1 class="text-2xl font-bold">{{ target.name }}</h1>
+            <div class="text-gray-600">{{ target.email }}</div>
+        </div>
+        {% if user and user.id != target.id %}
+        <form method="post" action="{{ url_for('subscribe', user_id=target.id) }}" class="ml-auto">
+            {% if is_subscribed %}
+            <button class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">Отписаться</button>
+            {% else %}
+            <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">Подписаться</button>
+            {% endif %}
+        </form>
+        {% endif %}
+    </div>
+    <h2 class="text-lg font-semibold mb-2">Публикации</h2>
+    <div class="space-y-4">
+    {% for post in posts %}
+        <div class="bg-gray-50 rounded-xl p-4 shadow-sm flex items-center gap-2">
+            <a href="{{ url_for('post_view', post_id=post.id) }}" class="text-blue-700 font-semibold hover:underline">{{ post.title }}</a>
+            <span class="text-xs text-gray-400 ml-auto">{{ post.date.strftime('%d.%m.%Y %H:%M') }}</span>
+        </div>
+    {% else %}
+        <div class="text-gray-400">Нет публикаций.</div>
+    {% endfor %}
+    </div>
+</div>
+{% endblock %}
