@@ -157,42 +157,23 @@ def feed_recommendations():
         current_tab='recommendations'
     )
 
+#
 @app.route('/tag/<tag>')
 def posts_by_tag(tag):
     user = get_current_user()
-    sort = request.args.get('sort', 'new')
-    if user:
-        posts_query = Post.query.filter(
-            ((Post.is_private == False) | (Post.user_id == user.id)) &
-            (Post.tags.ilike(f"%{tag}%"))
-        )
-    else:
-        posts_query = Post.query.filter(
-            (Post.is_private == False) &
-            (Post.tags.ilike(f"%{tag}%"))
-        )
-    if sort == 'old':
-        posts_query = posts_query.order_by(Post.date.asc())
-    elif sort == 'likes':
-        posts_query = posts_query.outerjoin(Like, Post.id == Like.post_id)\
-            .group_by(Post.id)\
-            .order_by(func.count(Like.id).desc(), Post.date.desc())
-    else:
-        posts_query = posts_query.order_by(Post.date.desc())
-    posts = posts_query.all()
-    for post in posts:
-        post.likes_count = Like.query.filter_by(post_id=post.id).count()
+    posts = Post.query.filter(
+        (Post.tags == tag) |
+        (Post.tags.ilike(f'{tag},%')) |
+        (Post.tags.ilike(f'%,{tag},%')) |
+        (Post.tags.ilike(f'%,{tag}'))
+    ).all()
     likes = []
     if user:
         likes = [like.post_id for like in Like.query.filter_by(user_id=user.id)]
-    all_tags = set()
+    # лайки для каждого поста
     for post in posts:
-        if post.tags:
-            for t in post.tags.split(','):
-                t = t.strip()
-                if t:
-                    all_tags.add(t)
-    return render_template('index.html', posts=posts, user=user, likes=likes, all_tags=sorted(all_tags), current_tag=tag, sort=sort, current_tab='all')
+        post.likes_count = Like.query.filter_by(post_id=post.id).count()
+    return render_template('index.html', posts=posts, current_tag=tag, user=user, likes=likes)
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -303,7 +284,7 @@ def edit_post(post_id):
     if request.method == 'POST':
         post.title = request.form['title']
         post.content = request.form['content']
-        post.tags = request.form['tags']
+        post.tags = normalize_tags(request.form['tags'])
         post.is_private = 'is_private' in request.form
         db.session.commit()
         return redirect(url_for('post_view', post_id=post.id))
@@ -318,6 +299,9 @@ def delete_post(post_id):
     db.session.delete(post)
     db.session.commit()
     return redirect(url_for('profile'))
+
+def normalize_tags(tags_raw):
+    return ",".join([t.strip() for t in tags_raw.split(",") if t.strip()])    
 
 @app.route('/user/<int:user_id>')
 def view_user(user_id):
