@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
@@ -124,6 +124,8 @@ def feed_subscriptions():
         feed_type='subscriptions',
         current_tab='subscriptions'
     )
+
+    
 
 @app.route('/feed/recommendations')
 def feed_recommendations():
@@ -261,7 +263,7 @@ def post_view(post_id):
     likes_count = Like.query.filter_by(post_id=post.id).count()
     return render_template('post.html', post=post, comments=comments, user=user, liked=liked, likes_count=likes_count)
 
-@app.route('/post/<int:post_id>/like', methods=['POST'])
+@app.route('/post/<int:post_id>/like', methods=['POST'])  #Лайк из поста
 def like_post(post_id):
     user = get_current_user()
     if not user:
@@ -272,6 +274,25 @@ def like_post(post_id):
         db.session.add(Like(user_id=user.id, post_id=post.id))
         db.session.commit()
     return redirect(url_for('post_view', post_id=post.id))
+
+@app.route('/like/<int:post_id>', methods=['POST']) #Лайк из ленты
+def like_post_ajax(post_id):
+    user = get_current_user()
+    if not user:
+        return jsonify({'success': False, 'error': 'Войдите для лайка'}), 401
+    post = Post.query.get_or_404(post_id)
+    existing_like = Like.query.filter_by(user_id=user.id, post_id=post.id).first()
+    removed = False
+    if existing_like:
+        db.session.delete(existing_like)
+        db.session.commit()
+        removed = True
+    else:
+        db.session.add(Like(user_id=user.id, post_id=post.id))
+        db.session.commit()
+    likes = Like.query.filter_by(post_id=post.id).count()
+    return jsonify({'success': True, 'likes': likes, 'removed': removed})
+    
 
 @app.route('/post/<int:post_id>/edit', methods=['GET', 'POST'])
 def edit_post(post_id):
