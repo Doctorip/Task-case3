@@ -215,7 +215,7 @@ def new_post():
     if request.method == 'POST':
         title = request.form['title']
         content = request.form['content']
-        tags = request.form['tags']
+        tags = normalize_tags(request.form['tags'])
         is_private = 'is_private' in request.form
         post = Post(user_id=user.id, title=title, content=content, tags=tags, date=datetime.now(), is_private=is_private)
         db.session.add(post)
